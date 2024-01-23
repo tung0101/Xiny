@@ -158,6 +158,12 @@
                 </div>
             </div>
         </div>
+        <style>
+ .item .items img {
+    width: 100%; 
+    height: 350px; 
+}
+</style>
         <div class="colorlib-product">
             <div class="container">
                 <div class="row">
@@ -184,7 +190,7 @@
                                                                 echo '<span>Giảm ' . number_format($row['DonGia'] - $price_sale) . 'đ </span>';
                                                             } ?>
                                                     </div>
-                                                    <div><img src="webroot/image/sanpham/<?php echo $row['AnhNen']; ?>"></div>
+                                                    <div class="items"><img src="webroot/image/sanpham/<?php echo $row['AnhNen']; ?>"></div>
                                                     <div class="item-name">
                                                         <p> <?php echo $row['TenSP']; ?> </p>
                                                     </div>

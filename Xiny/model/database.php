@@ -191,19 +191,46 @@ function product_detail_image($id){
   mysqli_close($conn);
 }
 // check số lượgn prodcut
-function check_product_soluong($id,$size,$mau){
+function check_product_soluong($id, $size, $mau){
   global $conn;
-  $sql="select SoLuong from chitietsanpham where MaSP=".$id." and MaMau='".$mau."' and MaSize=".$size;
-  $resulf = mysqli_query($conn ,$sql);  
-  $count=mysqli_num_rows($resulf);        
-  if($count==0){
-    return $soluongkho=0;
-  }else{
-    $soluongkho=mysqli_fetch_array($resulf);
-    return  $soluongkho['SoLuong'];
-  }     
-mysqli_close($conn);
+
+  // Sử dụng câu truy vấn tham số hóa để tránh SQL injection
+  $sql = "SELECT SoLuong FROM chitietsanpham WHERE MaSP = ? AND MaMau = ? AND MaSize = ?";
+  
+  // Sử dụng Prepared Statements để an toàn hơn
+  $stmt = mysqli_prepare($conn, $sql);
+  
+  // Kiểm tra lỗi Prepared Statements
+  if (!$stmt) {
+      die('Query failed: ' . mysqli_error($conn));
+  }
+
+  // Bắt đầu bind tham số
+  mysqli_stmt_bind_param($stmt, 'iss', $id, $mau, $size);
+
+  // Thực hiện truy vấn
+  mysqli_stmt_execute($stmt);
+
+  // Lấy kết quả
+  mysqli_stmt_bind_result($stmt, $soluongkho);
+
+  // Fetch kết quả
+  mysqli_stmt_fetch($stmt);
+
+  // Đóng statement
+  mysqli_stmt_close($stmt);
+
+  // Kiểm tra và trả về kết quả
+  if ($soluongkho === null) {
+      return 0; // Trường hợp không tìm thấy dữ liệu
+  } else {
+      return $soluongkho;
+  }
+
+  // Lưu ý: Đừng đặt mã đóng kết nối mysqli_close($conn) ở đây vì nó sẽ không được thực hiện.
+  // Kết nối sẽ được đóng sau khi script kết thúc.
 }
+
 // check phiếu giảm giá
 if (isset($_POST["functionName"])) {
   if ($_POST["functionName"] == "check_coupon") {
@@ -311,37 +338,104 @@ function product_category($id){
 // ------------------------------------------ card MODEL----------------------
 // xử lý đặt hàng
 
-function order_product($nn,$dcnn,$sdtnn,$makh,$tt){
+function order_product($nn, $dcnn, $sdtnn, $makh, $tt) {
   global $conn;
-  $sql="INSERT INTO `hoadon`(`MaKH`,  `TinhTrang`, `TongTien`) VALUES ($makh,N'chưa duyệt',$tt)";
-  $resulf = mysqli_query($conn ,$sql); 
-  if($resulf){
-    $sql2="select MaHD from hoadon where MaKH=$makh and TongTien=$tt ORDER BY MaHD DESC limit 1";
-    $rs2=mysqli_query($conn,$sql2);
-    $kq2=mysqli_fetch_array($rs2);$mahd=$kq2['MaHD'];
-    foreach ($_SESSION['cart_product'] as $item) {
-      $DonGia = str_replace(',', '', $item['DonGia']);
-      $ttt=($item['SoLuong']* $DonGia);
-      $masp=$item['MaSP']; $sl=$item['SoLuong']; $dg=$DonGia; $mamau=$item['Mau']; $size=$item['Size'];
-      $sql3="INSERT INTO `chitiethoadon`(`MaHD`, `MaSP`, `SoLuong`, `DonGia`, `ThanhTien`, `Size`, `MaMau`) VALUES($mahd,$masp,$sl,$dg,$ttt,$size,'$mamau')";
-      $rs3=mysqli_query($conn,$sql3);
-      $sql_sl="UPDATE `chitietsanpham` SET `SoLuong`=(`SoLuong`-'$sl') WHERE `MaSP`='$masp' and `MaSize`='$size' and `MaMau`='$mamau'";
-      $rs_sl=mysqli_query($conn,$sql_sl);
-    }
-    if($rs3){
-      if($rs_sl){
-        $sql4="INSERT INTO `nguoinhan`(`MaHD`, `TenNN`, `DiaChiNN`, `SDTNN`) VALUES($mahd,'$nn','$dcnn',$sdtnn)";
-        $rs4=mysqli_query($conn,$sql4);
-        if($rs4){
-          unset($_SESSION['cart_product']);
-          return true;
-        }else{
-          return false;
-        }
-      }	
-    }
+
+  // Truy vấn INSERT hóa đơn
+  $sql = "INSERT INTO `hoadon`(`MaKH`, `TinhTrang`, `TongTien`) VALUES (?, 'chưa duyệt', ?)";
+  $stmt = mysqli_prepare($conn, $sql);
+
+  // Kiểm tra lỗi Prepared Statements
+  if (!$stmt) {
+      die('Query failed: ' . mysqli_error($conn));
   }
+
+  // Bắt đầu bind tham số
+  mysqli_stmt_bind_param($stmt, 'ii', $makh, $tt);
+
+  // Thực hiện truy vấn
+  $resulf = mysqli_stmt_execute($stmt);
+
+  // Kiểm tra và lấy mã hóa đơn vừa thêm
+  if ($resulf) {
+      $last_insert_id = mysqli_insert_id($conn);
+      
+      // Truy vấn INSERT chi tiết hóa đơn
+      foreach ($_SESSION['cart_product'] as $item) {
+          $DonGia = str_replace(',', '', $item['DonGia']);
+          $ttt = ($item['SoLuong'] * $DonGia);
+          $masp = $item['MaSP']; 
+          $sl = $item['SoLuong']; 
+          $dg = $DonGia; 
+          $mamau = $item['Mau']; 
+          $size = $item['Size'];
+
+          $sql3 = "INSERT INTO `chitiethoadon`(`MaHD`, `MaSP`, `SoLuong`, `DonGia`, `ThanhTien`, `Size`, `MaMau`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+          $stmt3 = mysqli_prepare($conn, $sql3);
+
+          // Kiểm tra lỗi Prepared Statements
+          if (!$stmt3) {
+              die('Query failed: ' . mysqli_error($conn));
+          }
+
+          // Bắt đầu bind tham số
+          mysqli_stmt_bind_param($stmt3, 'iiidiss', $last_insert_id, $masp, $sl, $dg, $ttt, $size, $mamau);
+
+          // Thực hiện truy vấn
+          $rs3 = mysqli_stmt_execute($stmt3);
+
+          // Truy vấn UPDATE số lượng sản phẩm
+          $sql_sl = "UPDATE `chitietsanpham` SET `SoLuong`=(`SoLuong` - ?) WHERE `MaSP`=? AND `MaSize`=? AND `MaMau`=?";
+          $stmt_sl = mysqli_prepare($conn, $sql_sl);
+
+          // Kiểm tra lỗi Prepared Statements
+          if (!$stmt_sl) {
+              die('Query failed: ' . mysqli_error($conn));
+          }
+
+          // Bắt đầu bind tham số
+          mysqli_stmt_bind_param($stmt_sl, 'issi', $sl, $masp, $size, $mamau);
+
+          // Thực hiện truy vấn
+          $rs_sl = mysqli_stmt_execute($stmt_sl);
+
+          // Đóng statement
+          mysqli_stmt_close($stmt3);
+          mysqli_stmt_close($stmt_sl);
+      }
+
+      // Truy vấn INSERT thông tin người nhận
+      $sql4 = "INSERT INTO `nguoinhan`(`MaHD`, `TenNN`, `DiaChiNN`, `SDTNN`) VALUES (?, ?, ?, ?)";
+      $stmt4 = mysqli_prepare($conn, $sql4);
+
+      // Kiểm tra lỗi Prepared Statements
+      if (!$stmt4) {
+          die('Query failed: ' . mysqli_error($conn));
+      }
+
+      // Bắt đầu bind tham số
+      mysqli_stmt_bind_param($stmt4, 'isss', $last_insert_id, $nn, $dcnn, $sdtnn);
+
+      // Thực hiện truy vấn
+      $rs4 = mysqli_stmt_execute($stmt4);
+
+      // Đóng statement
+      mysqli_stmt_close($stmt4);
+
+      // Kiểm tra và trả kết quả
+      if ($rs4) {
+          unset($_SESSION['cart_product']);
+          return true; // Thành công
+      } else {
+          return false; // Lỗi khi thêm thông tin người nhận
+      }
+  } else {
+      return false; // Lỗi khi thêm hóa đơn
+  }
+
+  // Lưu ý: Không cần đặt mã đóng kết nối mysqli_close($conn) ở đây vì nó sẽ được tự động đóng khi script kết thúc.
 }
+
 // -------------------------------------------------------------------------------
 // ------------------------------------------ user MODEL----------------------
 // đăng ký mới

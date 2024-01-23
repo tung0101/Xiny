@@ -118,7 +118,7 @@ if (product_detail_image($id) == false) {
                     <div class="block-26 mb-2">
                         <h4>Size</h4>
                         <?php while ($row = (mysqli_fetch_array($product_detail_size))) { ?>
-                            <div class="box-size">
+                            <div class="box-size pl-2">
                                 <input type="radio" class="custom-control-input " id="<?php echo $row['MaSize']; ?>"
                                     name="size" value="<?php echo $row['MaSize']; ?>" required>
                                 <label class="custom-control-label " for="<?php echo $row['MaSize']; ?>">
@@ -134,7 +134,7 @@ if (product_detail_image($id) == false) {
                     <div class="block-26 mb-2">
                         <h4>Màu</h4>
                         <?php while ($row = (mysqli_fetch_array($product_detail_color))) { ?>
-                            <div class="box-mau">
+                            <div class="box-mau pl-2">
                                 <input type="radio" class="custom-control-input " id="<?php echo $row['MaMau']; ?>"
                                     name="mau" value="<?php echo $row['MaMau']; ?>" required>
                                 <label class="custom-control-label " for="<?php echo $row['MaMau']; ?>">
@@ -190,7 +190,7 @@ if (product_detail_image($id) == false) {
                                         aria-expanded="true">Mô tả</a>
                                 </li> -->
                                 <li class="nav-item">
-                                    <a class="nav-link" id="pills-review-tab">Đánh giá</a>
+                                    <a class="nav-link" id="pills-review-tab" >Đánh giá</a>
                                 </li>
                             </ul>
                             <div class="cmt-box">

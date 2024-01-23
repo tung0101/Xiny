@@ -147,9 +147,9 @@ if(isset($_POST['order'])){
         $mail->Password   = 'tfwtuuqfwzpgparm';                         // mật khẩu đăng nhập SMTP
         $mail->SMTPSecure = 'tls';                                  // giao thức bảo mật TLS
         $mail->Port       = 587;
-        $mail->setFrom('hongnhung.topy@gmail.com', 'Bo Shop');          // địa chỉ email và tên người gửi
+        $mail->setFrom('tungndps21572@fpt.edu.vn', 'Xiny Shop');          // địa chỉ email và tên người gửi
         $mail->addAddress($kh['Email'], $kh['TenKH']); // địa chỉ email và tên người nhận
-        $mail->Subject = ' Bo Shop - DON HANG CUA BAN';                               // tiêu đề email
+        $mail->Subject = ' Xiny Shop - DON HANG CUA BAN';                               // tiêu đề email
         $mail->Body    = $message;     
         $mail->isHTML(true);                            // định dạng email dưới dạng HTML
         // $mail->addAttachment('path/to/file.pdf');       // đính kèm tập tin PDF
